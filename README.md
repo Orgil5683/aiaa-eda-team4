@@ -43,9 +43,3 @@ import aiaa_eda_team4 as et
 |---|---|---|
 | `plot_hist(df, col, path=None, bins=50, vline=None)` | `vline` = лавлах шугам (жишээ нь 15) | `path` өгвөл PNG хадгална |
 | `plot_bar(series, path=None, title=None, hline=None)` | pandas Series | `path` өгвөл PNG хадгална |
-
-## Хариуцагч
-| Файл | Хариуцагч |
-|---|---|
-| `cleaning.py`, `stats.py` | Гишүүн 1 |
-| `plots.py`, `__init__.py`, `constants.py`, `pyproject.toml` | Гишүүн 2 |
