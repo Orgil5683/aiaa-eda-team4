@@ -1,4 +1,3 @@
-
 """Статистикийн функцууд: үндсэн үзүүлэлт, босго давсан хувь, өвлийн дундаж."""
 
 import pandas as pd
@@ -8,7 +7,8 @@ from .constants import WINTER_MONTHS
 
 
 def basic_stats(df, col, by=None):
-    """Тоон баганын үндсэн статистикийг тооцно."""
+    """Үндсэн статистик үзүүлэлтүүдийг тооцно."""
+
     if col not in df.columns:
         raise ValueError(f"'{col}' багана өгөгдөлд алга.")
 
@@ -16,16 +16,26 @@ def basic_stats(df, col, by=None):
     data[col] = pd.to_numeric(data[col], errors="coerce")
 
     if by is None:
-        return data[col].describe()[
-            ["count", "mean", "50%", "min", "max", "std"]
-        ].rename(
-            {"50%": "median"}
-        ).to_frame().T.rename(index={col: col}).round(1).rename(
-            columns={"50%": "median"}
+        data = data.dropna(subset=[col])
+
+        if data.empty:
+            return pd.DataFrame(
+                columns=["count", "mean", "median", "min", "max", "std"],
+                index=pd.Index([], name=None),
+            )
+
+        return (
+            data[col]
+            .agg(["count", "mean", "median", "min", "max", "std"])
+            .round(1)
+            .to_frame(col)
+            .T
         )
 
     if by not in data.columns:
-        raise ValueError(f"'{by}' бүлэглэх багана өгөгдөлд алга.")
+        raise ValueError(f"'{by}' багана өгөгдөлд алга.")
+
+    data = data.dropna(subset=[by, col])
 
     return (
         data.groupby(by)[col]
@@ -34,24 +44,25 @@ def basic_stats(df, col, by=None):
     )
 
 
-def group_rate(df, group_col, col, threshold):
+def group_rate(df, by, col, threshold):
     """Бүлэг тус бүрт босго давсан утгын хувийг тооцно."""
-    if group_col not in df.columns:
-        raise ValueError(f"'{group_col}' багана өгөгдөлд алга.")
+
+    if by not in df.columns:
+        raise ValueError(f"'{by}' багана өгөгдөлд алга.")
 
     if col not in df.columns:
         raise ValueError(f"'{col}' багана өгөгдөлд алга.")
 
-    data = df[[group_col, col]].copy()
+    data = df[[by, col]].copy()
     data[col] = pd.to_numeric(data[col], errors="coerce")
-    data = data.dropna(subset=[group_col, col])
+    data = data.dropna(subset=[by, col])
 
     if data.empty:
         return pd.Series(dtype=float, name=col)
 
     return (
         data.assign(exceeded=data[col] > threshold)
-        .groupby(group_col)["exceeded"]
+        .groupby(by)["exceeded"]
         .mean()
         .mul(100)
         .round(1)
@@ -67,61 +78,57 @@ def winter_summary(
     month_col="month",
 ):
     """
-    Бүтэн өвөл бүрийн PM2.5 дундаж болон хэмжилтийн тоог тооцно.
+    Бүрэн өвөл бүрийн дундаж утгыг тооцно.
 
-    winter, month багана байхгүй бол cleaning.py доторх
-    add_time_columns() функцийг автоматаар ашиглана.
+    Өвлийн сар бүр дор хаяж min_days өдөртэй байвал
+    тухайн өвлийг бүрэн гэж тооцно.
 
-    Өвлийн саруудад WINTER_MONTHS тогтмолыг ашиглана.
-    Өвөл бүрд хамгийн багадаа min_days хэмжилттэй байна.
+    Олон станц холилдохгүйн тулд нэг станцаар шүүсэн өгөгдөл өгнө.
     """
+
     if col not in df.columns:
         raise ValueError(f"'{col}' багана өгөгдөлд алга.")
 
     data = df.copy()
 
+    # winter, month багана байхгүй бол cleaning.py-ээс үүсгэнэ.
     if winter_col not in data.columns or month_col not in data.columns:
         data = add_time_columns(data)
 
-    if winter_col not in data.columns or month_col not in data.columns:
+    required = [col, winter_col, month_col]
+    missing = [c for c in required if c not in data.columns]
+
+    if missing:
         raise ValueError(
-            f"'{winter_col}', '{month_col}' баганууд үүссэнгүй. "
-            "Огнооны багана байгаа эсэхийг шалгана уу."
+            f"Дараах баганууд өгөгдөлд алга: {missing}. "
+            "Огнооны багана болон cleaning.py-ийн add_time_columns() "
+            "функцийг шалгана уу."
         )
 
     data[col] = pd.to_numeric(data[col], errors="coerce")
-    data[month_col] = pd.to_numeric(data[month_col], errors="coerce")
-
-    data = data.dropna(subset=[winter_col, month_col, col]).copy()
-
-    # Өвлийн саруудын хэмжилтийг сонгоно.
-    data = data[data[month_col].isin(WINTER_MONTHS)]
+    data = data.dropna(subset=required).copy()
 
     if data.empty:
         return pd.DataFrame(columns=["mean", "count"])
 
-    # Өвөл бүрийн сар тус бүрийн хэмжилтийн тоо.
+    # Өвлийн саруудын өдөр тутмын хэмжилтийн тоог тооцно.
     counts = (
-        data.groupby([winter_col, month_col])
+        data[data[month_col].isin(WINTER_MONTHS)]
+        .groupby([winter_col, month_col])
         .size()
         .unstack(fill_value=0)
         .reindex(columns=WINTER_MONTHS, fill_value=0)
     )
 
-    # Бүх өвлийн саруудад хангалттай хэмжилттэй өвлүүд.
-    complete_winters = counts[
-        (counts >= min_days).all(axis=1)
-    ].index
+    # Бүх өвлийн сар min_days-аас доошгүй хэмжилттэй байх ёстой.
+    complete = counts.index[(counts >= min_days).all(axis=1)]
 
-    if len(complete_winters) == 0:
+    if len(complete) == 0:
         return pd.DataFrame(columns=["mean", "count"])
 
-    # Бүтэн өвлүүдийн дундаж болон хэмжилтийн тоо.
-    result = (
-        data[data[winter_col].isin(complete_winters)]
+    return (
+        data[data[winter_col].isin(complete)]
         .groupby(winter_col)[col]
         .agg(["mean", "count"])
         .round(1)
     )
-
-    return result
