@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "aiaa-eda-team4"
 version = "0.1.0"
-description = "Ulaanbaatar PM2.5 air quality data analyzer"
+description = "Улаанбаатарын PM2.5 агаарын чанарын өгөгдөлд зориулсан EDA туслах сан (AI Academy, 4-р баг)"
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [{ name = "AI Academy Team 4" }]
