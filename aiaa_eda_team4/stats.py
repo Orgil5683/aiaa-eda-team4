@@ -1,4 +1,4 @@
-
+from .cleaning import add_time_columns
 """Статистикийн функцууд: товч үзүүлэлт, босгоос дээших хувь, өвлийн дундаж."""
 
 import pandas as pd
@@ -46,6 +46,9 @@ def winter_summary(
     Өвлийн сар бүр дор хаяж min_days өдөртэй байвал
     тухайн өвлийг бүрэн гэж тооцно.
     """
+    if winter_col not in df.columns or month_col not in df.columns:
+        df = add_time_columns(df)
+
     w = df.dropna(subset=[winter_col, col])
 
     counts = w.groupby([winter_col, month_col]).size().unstack(fill_value=0)
