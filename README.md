@@ -73,11 +73,5 @@ et.plot_bar(us.groupby("month")["pm25"].mean(), path="figures/02_monthly.png",
 | `plot_hist(df, col, path=None, bins=50, vline=None, title=None)` | `vline` = лавлах шугам (жишээ нь 15) | Axes; `path` өгвөл PNG хадгална |
 | `plot_bar(series, path=None, title=None, hline=None, xlabel=None, ylabel=None, color="steelblue", horizontal=False)` | `color` = нэг өнгө эсвэл жагсаалт; `horizontal=True` бол хэвтээ | Axes; `path` өгвөл PNG хадгална |
 
-## Хариуцагч
-| Файл | Хариуцагч |
-|---|---|
-| `constants.py`, `cleaning.py`, `plots.py`, `__init__.py`, `pyproject.toml` | Оргил |
-| `stats.py` | Гишүүн A |
-
 ## Хувилбар
 - **0.1.0**: Анхны хувилбар. Цэвэрлэгээ, статистик, графикийн 10 функц.
