@@ -9,7 +9,17 @@ description = "Улаанбаатарын PM2.5 агаарын чанарын ө
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [{ name = "AI Academy Team 4" }]
+keywords = ["eda", "air-quality", "pm25", "ulaanbaatar", "pandas"]
 dependencies = ["pandas", "numpy", "matplotlib", "seaborn"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Education",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+]
+
+[project.urls]
+Source = "https://github.com/Orgil5683/aiaa-eda-team4"
 
 [tool.setuptools]
 packages = ["aiaa_eda_team4"]
